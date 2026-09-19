@@ -18,12 +18,17 @@ diff -ur orig/vtest/vtest_server.c mod/vtest/vtest_server.c
     .socket = -1,
  
     .read_file = NULL,
-@@ -130,7 +131,7 @@
+@@ -130,7 +131,12 @@
  static void vtest_server_run(void);
  static void vtest_server_close_socket(void);
  static int vtest_client_dispatch_commands(struct vtest_client *client);
 -
 +extern void epoxy_set_library_path(const char *path);
++static const char *angle_library_path(const char *fallback)
++{
++   const char *path = getenv("VTEST_ANGLE_LIBRARY_PATH");
++   return path && path[0] ? path : fallback;
++}
  
  int vtest_main(int argc, char **argv)
  {
@@ -67,7 +72,7 @@ diff -ur orig/vtest/vtest_server.c mod/vtest/vtest_server.c
 +             printf("Only one of [--angle-gl] [--angle-vulkan] [--angle-null] can be used at the same time.");
 +             exit(EXIT_FAILURE);
 +         }
-+         epoxy_set_library_path("@TERMUX_PREFIX@/opt/angle-android/gl");
++         epoxy_set_library_path(angle_library_path("@TERMUX_PREFIX@/opt/angle-android/gl"));
 +         server.angle_path = 1;
 +         break;
 +      case OPT_ANGLE_VULKAN:
@@ -75,7 +80,7 @@ diff -ur orig/vtest/vtest_server.c mod/vtest/vtest_server.c
 +             printf("Only one of [--angle-gl] [--angle-vulkan] [--angle-null] can be used at the same time.");
 +             exit(EXIT_FAILURE);
 +         }
-+         epoxy_set_library_path("@TERMUX_PREFIX@/opt/angle-android/vulkan");
++         epoxy_set_library_path(angle_library_path("@TERMUX_PREFIX@/opt/angle-android/vulkan"));
 +         server.angle_path = 1;
 +         break;
 +      case OPT_ANGLE_NULL:
@@ -83,7 +88,7 @@ diff -ur orig/vtest/vtest_server.c mod/vtest/vtest_server.c
 +             printf("Only one of [--angle-gl] [--angle-vulkan] [--angle-null] can be used at the same time.");
 +             exit(EXIT_FAILURE);
 +         }
-+         epoxy_set_library_path("@TERMUX_PREFIX@/opt/angle-android/vulkan-null");
++         epoxy_set_library_path(angle_library_path("@TERMUX_PREFIX@/opt/angle-android/vulkan-null"));
 +         server.angle_path = 1;
           break;
  #ifdef ENABLE_VENUS
