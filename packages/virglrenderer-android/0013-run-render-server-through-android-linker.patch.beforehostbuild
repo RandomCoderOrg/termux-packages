@@ -1,0 +1,38 @@
+--- a/src/proxy/proxy_server.c
++++ b/src/proxy/proxy_server.c
+@@ -67,16 +67,31 @@ proxy_server_fork(struct proxy_server *srv)
+       snprintf(fd_str, sizeof(fd_str), "%d", remote_fd);
+ 
+       /* for devenv without installing server */
+-      char *const server_path = getenv("RENDER_SERVER_EXEC_PATH");
++      char *const configured_server_path = getenv("RENDER_SERVER_EXEC_PATH");
++      char *const server_path =
++         configured_server_path ? configured_server_path : RENDER_SERVER_EXEC_PATH;
++#ifdef __ANDROID__
++#ifdef __LP64__
++      char *const linker_path = "/system/bin/linker64";
++#else
++      char *const linker_path = "/system/bin/linker";
++#endif
+       char *const argv[] = {
+-         server_path ? server_path : RENDER_SERVER_EXEC_PATH,
++         linker_path,
++         server_path,
+          "--socket-fd",
+          fd_str,
+          NULL,
+       };
+-      execv(argv[0], argv);
++      execv(linker_path, argv);
++#else
++      char *const argv[] = {
++         server_path, "--socket-fd", fd_str, NULL,
++      };
++      execv(server_path, argv);
++#endif
+ 
+-      proxy_log("failed to exec %s: %s", argv[0], strerror(errno));
++      proxy_log("failed to exec %s: %s", server_path, strerror(errno));
+       close(remote_fd);
+       exit(-1);
+    }
