@@ -136,10 +136,10 @@ diff --git a/src/venus/vkr_device_memory.c b/src/venus/vkr_device_memory.c
 +
 +#if defined(__TERMUX__)
 +static VkResult
-+vkr_get_fd_info_from_allocation_info(UNUSED struct vkr_physical_device *physical_dev,
-+                                     const VkMemoryAllocateInfo *alloc_info,
-+                                     void **out_gbm_bo,
-+                                     VkImportMemoryFdInfoKHR *out_fd_info)
++vkr_gbm_get_fd_info_from_allocation_info(UNUSED struct vkr_physical_device *physical_dev,
++                                         const VkMemoryAllocateInfo *alloc_info,
++                                         void **out_gbm_bo,
++                                         VkImportMemoryFdInfoKHR *out_fd_info)
 +{
 +   struct fake_gbm_bo *bo = malloc(sizeof(*bo));
 +   if (!bo)
@@ -213,8 +213,8 @@ diff --git a/src/venus/vkr_device_memory.c b/src/venus/vkr_device_memory.c
 +
 +      prev_of_export_info->pNext = export_info->pNext;
 +
-+      args->ret = vkr_get_fd_info_from_allocation_info(physical_dev, alloc_info, &gbm_bo,
-+                                                       &local_import_info);
++      args->ret = vkr_gbm_get_fd_info_from_allocation_info(
++         physical_dev, alloc_info, &gbm_bo, &local_import_info);
 +      if (args->ret != VK_SUCCESS)
 +         return;
 +
