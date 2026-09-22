@@ -53,7 +53,7 @@ termux_step_host_build() {
 		CXX=$(command -v "$TERMUX_HOST_PLATFORM-clang++")
 	fi
 	LD=$(command -v ld.lld)
-	CFLAGS=""
+	CFLAGS="-D__TERMUX__"
 	CPPFLAGS=""
 	CXXFLAGS=""
 	LDFLAGS="-Wl,-rpath=$_INSTALL_PREFIX/lib"
