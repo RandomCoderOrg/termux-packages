@@ -7,8 +7,8 @@
 -   lib->handle = dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
 +   int flags = RTLD_NOW | RTLD_LOCAL;
 +#ifdef __ANDROID__
-+   /* Android Vulkan dependencies may own pthread-key destructors.  Keep the
-+    * worker's load group mapped until process exit so those callbacks remain valid.
++   /* Android's libvulkan load group may own pthread-key destructors.  Keep it
++    * mapped until worker process exit so those callbacks remain valid.
 +    */
 +   flags |= RTLD_NODELETE;
 +#endif

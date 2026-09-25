@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Rebuild the fork image when Android renderer toolchain inputs change.
+# Rebuild the fork image for Android renderer NDK 29 toolchain changes.
 
 set -e -u
 
