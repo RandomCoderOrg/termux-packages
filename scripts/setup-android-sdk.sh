@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Keep fork Android renderer builds synchronized with the NDK selected by properties.sh.
+# Rebuild the fork image when Android renderer toolchain inputs change.
 
 set -e -u
 
