@@ -1,0 +1,24 @@
+--- a/server/render_worker.c
++++ b/server/render_worker.c
+@@ -233,6 +233,9 @@ render_worker_jail_reap_any_worker(struct render_worker_jail *jail, bool block)
+ 
+    list_for_each_entry (struct render_worker, worker, &jail->workers, head) {
+       if (worker->pid == pid) {
++         render_log("context worker %d reaped: destroyed=%d code=%d status=%d",
++                    pid, worker->destroyed, siginfo.si_code,
++                    siginfo.si_status);
+          worker->reaped = true;
+          return worker;
+       }
+@@ -401,6 +404,11 @@ render_worker_create(struct render_worker_jail *jail,
+ 
+    render_worker_jail_add_worker(jail, worker);
+ 
++#ifndef ENABLE_RENDER_SERVER_WORKER_THREAD
++   if (worker->pid > 0)
++      render_log("created context worker %d", worker->pid);
++#endif
++
+    return worker;
+ }
+ 
