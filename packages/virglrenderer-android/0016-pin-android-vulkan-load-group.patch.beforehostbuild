@@ -1,0 +1,22 @@
+--- a/src/venus/vkr_library.c
++++ b/src/venus/vkr_library.c
+@@ -41,9 +41,17 @@ vkr_library_load(struct vulkan_library *lib)
+    if (lib->handle)
+       return true;
+ 
+-   lib->handle = dlopen("libvulkan.so.1", RTLD_NOW | RTLD_LOCAL);
++   int flags = RTLD_NOW | RTLD_LOCAL;
++#ifdef __ANDROID__
++   /* Android Vulkan dependencies may own pthread-key destructors.  Keep the
++    * worker's load group mapped until process exit so those callbacks remain valid.
++    */
++   flags |= RTLD_NODELETE;
++#endif
++
++   lib->handle = dlopen("libvulkan.so.1", flags);
+    if (lib->handle == NULL)
+-      lib->handle = dlopen("libvulkan.so", RTLD_NOW | RTLD_LOCAL);
++      lib->handle = dlopen("libvulkan.so", flags);
+    if (lib->handle == NULL) {
+       vkr_log("failed to open libvulkan: %s", dlerror());
+       return false;
