@@ -316,7 +316,7 @@ diff --git a/src/venus/vkr_physical_device.c b/src/venus/vkr_physical_device.c
 +
 +#if defined(__TERMUX__)
 +   if (mod_list) {
-+      prev_of_mod_list->pNext = mod_list;
++      prev_of_mod_list->pNext = (const VkBaseInStructure *)mod_list;
 +   }
 +#endif
  }
