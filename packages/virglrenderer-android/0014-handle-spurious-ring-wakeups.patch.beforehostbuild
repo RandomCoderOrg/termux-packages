@@ -1,4 +1,5 @@
-Backport upstream virglrenderer commit 485c0182421618b5b0f7defa0e80b92dbd3b9e15
+Backport upstream virglrenderer commit
+https://gitlab.freedesktop.org/virgl/virglrenderer/-/commit/485c0182421618b5b0f7defa0e80b92dbd3b9e15
 to keep Venus ring sequence progress intact across spurious condition-variable
 wakeups.
 
