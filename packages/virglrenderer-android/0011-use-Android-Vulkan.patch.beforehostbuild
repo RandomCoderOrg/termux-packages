@@ -292,10 +292,11 @@ diff --git a/src/venus/vkr_physical_device.c b/src/venus/vkr_physical_device.c
 +#if defined(__TERMUX__)
 +   VkDrmFormatModifierPropertiesListEXT *mod_list = vkr_find_struct(
 +      args->pFormatProperties, VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
++   VkBaseInStructure *prev_of_mod_list = NULL;
 +   if (mod_list) {
-+      VkBaseInStructure *prev_of_mod_list =
-+         vkr_find_prev_struct(args->pFormatProperties,
-+                              VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
++      prev_of_mod_list = vkr_find_prev_struct(
++         args->pFormatProperties,
++         VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
 +      prev_of_mod_list->pNext = mod_list->pNext;
 +
 +      mod_list->drmFormatModifierCount = 1;

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Keep fork CI builder images synchronized with the NDK selected by properties.sh.
+# Keep fork branch builds synchronized with the NDK selected by properties.sh.
 
 set -e -u
 
