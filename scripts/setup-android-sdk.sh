@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Keep fork CI builder images synchronized with the NDK selected by properties.sh.
+
 set -e -u
 
 : "${TERMUX_PKG_TMPDIR:="/tmp"}"
