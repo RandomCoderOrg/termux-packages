@@ -285,27 +285,22 @@ diff --git a/src/venus/vkr_physical_device.c b/src/venus/vkr_physical_device.c
     if (physical_dev->KHR_external_fence_fd) {
        const VkPhysicalDeviceExternalFenceInfo fence_info = {
           .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_FENCE_INFO,
-@@ -698,9 +712,36 @@ vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(
+@@ -698,9 +712,50 @@ vkr_dispatch_vkGetPhysicalDeviceFormatProperties2(
        vkr_physical_device_from_handle(args->physicalDevice);
     struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;
  
 +#if defined(__TERMUX__)
 +   VkDrmFormatModifierPropertiesListEXT *mod_list = vkr_find_struct(
 +      args->pFormatProperties, VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
-+   VkBaseInStructure *prev_of_mod_list = NULL;
++   VkBaseOutStructure *prev_of_mod_list = NULL;
++   uint32_t mod_capacity = 0;
 +   if (mod_list) {
 +      prev_of_mod_list = vkr_find_prev_struct(
 +         args->pFormatProperties,
 +         VK_STRUCTURE_TYPE_DRM_FORMAT_MODIFIER_PROPERTIES_LIST_EXT);
-+      prev_of_mod_list->pNext = mod_list->pNext;
-+
-+      mod_list->drmFormatModifierCount = 1;
-+
-+      if (mod_list->pDrmFormatModifierProperties) {
-+         mod_list->pDrmFormatModifierProperties[0] = (VkDrmFormatModifierPropertiesEXT){
-+            .drmFormatModifier = 0 /* DRM_FORMAT_MOD_LINEAR */,
-+            .drmFormatModifierPlaneCount = 1,
-+         };
++      if (prev_of_mod_list) {
++         mod_capacity = mod_list->drmFormatModifierCount;
++         prev_of_mod_list->pNext = (VkBaseOutStructure *)mod_list->pNext;
 +      }
 +   }
 +#endif
@@ -315,14 +310,33 @@ diff --git a/src/venus/vkr_physical_device.c b/src/venus/vkr_physical_device.c
                                            args->pFormatProperties);
 +
 +#if defined(__TERMUX__)
-+   if (mod_list) {
-+      prev_of_mod_list->pNext = (const VkBaseInStructure *)mod_list;
++   if (mod_list && prev_of_mod_list) {
++      VkFormatFeatureFlags linear_features =
++         args->pFormatProperties->formatProperties.linearTilingFeatures;
++      /* Multi-planar formats cannot be attachments.  Restrict the synthetic
++       * one-plane modifier to formats that can be used as render targets. */
++      bool has_modifier = (linear_features & (VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
++                                              VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)) != 0;
++
++      if (!mod_list->pDrmFormatModifierProperties && has_modifier) {
++         mod_list->drmFormatModifierCount = 1;
++      } else if (mod_capacity >= 1 && has_modifier) {
++         mod_list->drmFormatModifierCount = 1;
++         mod_list->pDrmFormatModifierProperties[0] = (VkDrmFormatModifierPropertiesEXT){
++            .drmFormatModifier = 0 /* DRM_FORMAT_MOD_LINEAR */,
++            .drmFormatModifierPlaneCount = 1,
++            .drmFormatModifierTilingFeatures = linear_features,
++         };
++      } else {
++         mod_list->drmFormatModifierCount = 0;
++      }
++      prev_of_mod_list->pNext = (VkBaseOutStructure *)mod_list;
 +   }
 +#endif
  }
  
  static void
-@@ -712,6 +753,18 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
+@@ -712,6 +767,18 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
        vkr_physical_device_from_handle(args->physicalDevice);
     struct vn_physical_device_proc_table *vk = &physical_dev->proc_table;
  
