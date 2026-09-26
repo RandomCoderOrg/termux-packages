@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Rebuild the fork image for Android renderer NDK 29 toolchain changes.
+# Keep the fork package builder aligned with the NDK selected by properties.sh.
 
 set -e -u
 
