@@ -1,0 +1,116 @@
+Keep libandroid loaded for the render worker lifetime.
+AHardwareBuffer calls may register thread-local destructors in transitive libraries.
+diff --git a/src/venus/vkr_device_memory.c b/src/venus/vkr_device_memory.c
+index 685a58e..8151173 100644
+--- a/src/venus/vkr_device_memory.c
++++ b/src/venus/vkr_device_memory.c
+@@ -227,12 +227,47 @@ typedef const native_handle_t *(*pfnAHardwareBuffer_getNativeHandle)(
+
+ struct fake_gbm_bo {
+    AHardwareBuffer *base;
+-   void *handle;
+    size_t size;
++};
++
++static struct {
++   void *handle;
+    pfnAHardwareBuffer_allocate allocate;
+    pfnAHardwareBuffer_release release;
+    pfnAHardwareBuffer_getNativeHandle getNativeHandle;
+-};
++   bool ready;
++} fake_gbm_api;
++
++/* Keep libandroid loaded: its dependencies may own worker-thread TLS state. */
++
++static void
++vkr_fake_gbm_api_init_once(void)
++{
++   fake_gbm_api.handle = dlopen("libandroid.so", RTLD_NOW);
++   if (!fake_gbm_api.handle)
++      return;
++
++#define LOAD_SYMBOL(func)                                                                \
++   fake_gbm_api.func = (pfnAHardwareBuffer_##func)dlsym(                                 \
++      fake_gbm_api.handle, "AHardwareBuffer_" #func);                                   \
++   if (!fake_gbm_api.func)                                                               \
++      return;
++
++   LOAD_SYMBOL(allocate)
++   LOAD_SYMBOL(release)
++   LOAD_SYMBOL(getNativeHandle)
++#undef LOAD_SYMBOL
++
++   fake_gbm_api.ready = true;
++}
++
++static bool
++vkr_fake_gbm_api_init(void)
++{
++   static once_flag once = ONCE_FLAG_INIT;
++   call_once(&once, vkr_fake_gbm_api_init_once);
++   return fake_gbm_api.ready;
++}
+ #endif
+
+ #if defined(__ANDROID__)
+@@ -241,7 +274,7 @@ vkr_gbm_bo_get_fd(void *gbm_bo)
+ {
+    struct fake_gbm_bo *bo = gbm_bo;
+
+-   const native_handle_t *bo_handle = bo->getNativeHandle(bo->base);
++   const native_handle_t *bo_handle = fake_gbm_api.getNativeHandle(bo->base);
+    if (bo_handle) {
+       for (int i = 0u; i < bo_handle->numFds; i++) {
+          size_t size = lseek(bo_handle->data[i], 0, SEEK_END);
+@@ -273,8 +306,7 @@ vkr_gbm_bo_destroy(void *gbm_bo)
+       return;
+
+    if (bo->base)
+-      bo->release(bo->base);
+-   dlclose(bo->handle);
++      fake_gbm_api.release(bo->base);
+    free(gbm_bo);
+ }
+ #else
+@@ -293,27 +325,12 @@ vkr_gbm_get_fd_info_from_allocation_info(UNUSED struct vkr_physical_device *phys
+                                          void **out_gbm_bo,
+                                          VkImportMemoryFdInfoKHR *out_fd_info)
+ {
+-   struct fake_gbm_bo *bo = malloc(sizeof(*bo));
++   if (!vkr_fake_gbm_api_init())
++      return VK_ERROR_INITIALIZATION_FAILED;
++
++   struct fake_gbm_bo *bo = calloc(1, sizeof(*bo));
+    if (!bo)
+       return VK_ERROR_OUT_OF_HOST_MEMORY;
+-
+-   if ((bo->handle = dlopen("libandroid.so", RTLD_NOW)) != NULL) {
+-#define LOAD_SYMBOL(func)                                                                \
+-   if ((bo->func = (pfnAHardwareBuffer_##func)dlsym(                                     \
+-           bo->handle, "AHardwareBuffer_" #func)) == NULL) {                             \
+-      dlclose(bo->handle);                                                               \
+-      free(bo);                                                                          \
+-      return VK_ERROR_INITIALIZATION_FAILED;                                             \
+-   }
+-
+-      LOAD_SYMBOL(allocate)
+-      LOAD_SYMBOL(release)
+-      LOAD_SYMBOL(getNativeHandle)
+-#undef LOAD_SYMBOL
+-   } else {
+-      free(bo);
+-      return VK_ERROR_INITIALIZATION_FAILED;
+-   }
+    bo->size = alloc_info->allocationSize;
+
+    AHardwareBuffer_Desc bo_desc = {
+@@ -326,7 +343,7 @@ vkr_gbm_get_fd_info_from_allocation_info(UNUSED struct vkr_physical_device *phys
+                AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY,
+    };
+
+-   if (bo->allocate(&bo_desc, &bo->base))
++   if (fake_gbm_api.allocate(&bo_desc, &bo->base))
+       goto error_free_bo;
+
+    VkImportAndroidHardwareBufferInfoANDROID *out_hwb_info = (void *)out_fd_info;
