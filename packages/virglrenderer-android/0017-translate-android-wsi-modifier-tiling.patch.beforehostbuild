@@ -1,0 +1,27 @@
+Translate the synthetic Android linear modifier query to linear tiling.
+
+The Android backend strips VkPhysicalDeviceImageDrmFormatModifierInfoEXT
+before calling the vendor driver. Keeping DRM modifier tiling after removing
+that structure makes the query invalid and leaves Mesa WSI with no supported
+modifiers. Reject modifiers other than the synthetic linear modifier instead
+of silently translating unsupported layouts.
+
+--- a/src/venus/vkr_physical_device.c
++++ b/src/venus/vkr_physical_device.c
+@@ -772,9 +772,16 @@ vkr_dispatch_vkGetPhysicalDeviceImageFormatProperties2(
+       args->pImageFormatInfo->pNext,
+       VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT);
+    if (mod_info) {
++      if (mod_info->drmFormatModifier != 0) {
++         args->ret = VK_ERROR_FORMAT_NOT_SUPPORTED;
++         return;
++      }
++
+       VkBaseInStructure *prev_of_mod_info = vkr_find_prev_struct(
+          args->pImageFormatInfo,
+          VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_DRM_FORMAT_MODIFIER_INFO_EXT);
+       prev_of_mod_info->pNext = mod_info->pNext;
++      ((VkPhysicalDeviceImageFormatInfo2 *)args->pImageFormatInfo)->tiling =
++         VK_IMAGE_TILING_LINEAR;
+    }
+ #endif
