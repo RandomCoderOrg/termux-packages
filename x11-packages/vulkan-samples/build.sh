@@ -21,6 +21,13 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -DGLFW_BUILD_WAYLAND=OFF
 "
 
+termux_step_pre_configure() {
+	# ASTC's NEON backend uses AArch64 intrinsics unavailable on 32-bit ARM.
+	if [ "$TERMUX_ARCH" = "arm" ]; then
+		TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -DASTC_ARCH=NONE"
+	fi
+}
+
 termux_step_get_source() {
 	mkdir -p "$TERMUX_PKG_SRCDIR"
 	git -C "$TERMUX_PKG_SRCDIR" init
