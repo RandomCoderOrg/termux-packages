@@ -1,0 +1,5 @@
+--- a/app/CMakeLists.txt
++++ b/app/CMakeLists.txt
+@@ -62 +62 @@
+-target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core vkb__filesystem apps plugins)
++target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core vkb__filesystem apps plugins log)
