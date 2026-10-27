@@ -42,8 +42,7 @@ else
 	sudo rm -rf /etc/skel /home/packer /home/linuxbrew
 	sudo rm -rf /usr/local /usr/src/
 
-	# https://github.com/actions/runner-images/issues/709#issuecomment-612569242
-	sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+	# Keep AGENT_TOOLSDIRECTORY: newer runners can keep action runtimes there.
 
 	# Clean compressed docker images
 	# Docker has already deflated them before free-space.sh was called in CI, so

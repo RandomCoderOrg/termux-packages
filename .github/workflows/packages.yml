@@ -39,7 +39,10 @@ jobs:
   build:
     permissions:
       contents: read # actions/upload-artifact doesn't need contents: write
+      packages: read # the fork's NDK 29 builder image is private on GHCR
     runs-on: ubuntu-26.04
+    env:
+      TERMUX_BUILDER_IMAGE_NAME: ${{ github.repository == 'RandomCoderOrg/termux-packages' && 'ghcr.io/randomcoderorg/termux-package-builder@sha256:82f4abcdad496bc2a00b223b01b7f88e97f25248bcc2fc6827702441b8fc716a' || 'ghcr.io/termux/package-builder' }}
     strategy:
       matrix:
         target_arch: [aarch64, arm, i686, x86_64]
@@ -49,6 +52,14 @@ jobs:
       uses: actions/checkout@v7
       with:
         fetch-depth: 1000
+
+    - name: Login to fork builder image
+      if: github.repository == 'RandomCoderOrg/termux-packages'
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Gather build summary
       id: build-info
