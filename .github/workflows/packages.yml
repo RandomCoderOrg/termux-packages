@@ -265,10 +265,7 @@ jobs:
     - name: Free additional disk space (if needed)
       if: ${{ steps.build-info.outputs.free-space == 'true' && steps.build-info.outputs.skip-building != 'true' }}
       run: |
-        ls -ld /home/runner/actions-runner/cached /opt/runner-cache || true
-        readlink -f /home/runner/actions-runner/cached || true
         ./scripts/free-space.sh
-        ls -ld /home/runner/actions-runner/cached /opt/runner-cache || true
 
     - name: List packages that are still installed on the server
       if: ${{ steps.build-info.outputs.free-space == 'true' && steps.build-info.outputs.skip-building != 'true' && runner.debug }}
@@ -338,14 +335,6 @@ jobs:
       if: always()
       run: |
         find debs -type f -name "*.deb" -exec sha256sum "{}" \; | sort -k2 | tee checksum-${{ matrix.target_arch }}-${{ github.sha }}.txt
-        if [ "$GITHUB_REPOSITORY" = "RandomCoderOrg/termux-packages" ]; then
-          ls -ld "$GITHUB_WORKSPACE"
-          for node in /home/runner/actions-runner/cached/*/externals/node24/bin/node; do
-            ls -l "$node" || true
-            readlink -f "$node" || true
-            "$node" --version || true
-          done
-        fi
     - name: Store checksums for built *.deb files
       if: always()
       uses: actions/upload-artifact@v7
