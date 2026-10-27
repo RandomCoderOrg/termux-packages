@@ -37,12 +37,12 @@ else
 		# microsoft-edge-stable already removed by the deps in the above apt purge
 
 	# Directories
-	sudo rm -rf /opt/ghc /opt/az /opt/hostedtoolcache /opt/actionarchivecache /opt/runner-cache
+	sudo rm -rf /opt/ghc /opt/az /opt/hostedtoolcache /opt/actionarchivecache
 	sudo rm -rf /opt/pipx /usr/share/dotnet /usr/share/swift /usr/share/miniconda /usr/share/az_* /usr/share/gradle-* /usr/share/java /home/runner/.rustup
 	sudo rm -rf /etc/skel /home/packer /home/linuxbrew
 	sudo rm -rf /usr/local /usr/src/
 
-	# Keep AGENT_TOOLSDIRECTORY: newer runners can keep action runtimes there.
+	# Keep /opt/runner-cache and AGENT_TOOLSDIRECTORY: runners may store action runtimes there.
 
 	# Clean compressed docker images
 	# Docker has already deflated them before free-space.sh was called in CI, so
