@@ -335,6 +335,14 @@ jobs:
       if: always()
       run: |
         find debs -type f -name "*.deb" -exec sha256sum "{}" \; | sort -k2 | tee checksum-${{ matrix.target_arch }}-${{ github.sha }}.txt
+        if [ "$GITHUB_REPOSITORY" = "RandomCoderOrg/termux-packages" ]; then
+          ls -ld "$GITHUB_WORKSPACE"
+          for node in /home/runner/actions-runner/cached/*/externals/node24/bin/node; do
+            ls -l "$node" || true
+            readlink -f "$node" || true
+            "$node" --version || true
+          done
+        fi
     - name: Store checksums for built *.deb files
       if: always()
       uses: actions/upload-artifact@v7
