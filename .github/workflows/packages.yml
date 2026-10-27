@@ -265,7 +265,10 @@ jobs:
     - name: Free additional disk space (if needed)
       if: ${{ steps.build-info.outputs.free-space == 'true' && steps.build-info.outputs.skip-building != 'true' }}
       run: |
+        ls -ld /home/runner/actions-runner/cached /opt/runner-cache || true
+        readlink -f /home/runner/actions-runner/cached || true
         ./scripts/free-space.sh
+        ls -ld /home/runner/actions-runner/cached /opt/runner-cache || true
 
     - name: List packages that are still installed on the server
       if: ${{ steps.build-info.outputs.free-space == 'true' && steps.build-info.outputs.skip-building != 'true' && runner.debug }}
