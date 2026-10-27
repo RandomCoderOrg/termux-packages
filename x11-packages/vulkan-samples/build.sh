@@ -4,6 +4,8 @@ TERMUX_PKG_LICENSE="custom"
 TERMUX_PKG_LICENSE_FILE="LICENSE,assets/README.md"
 TERMUX_PKG_MAINTAINER="@RandomCoderOrg"
 TERMUX_PKG_VERSION="0.0.20261022"
+# Vulkan-Hpp in this revision does not compile for 32-bit Android handles.
+TERMUX_PKG_EXCLUDED_ARCHES="arm, i686"
 _COMMIT=69622af06f7652c7fc9b9a9180e7142046315cbc
 TERMUX_PKG_SRCURL=git+https://github.com/KhronosGroup/Vulkan-Samples.git
 TERMUX_PKG_AUTO_UPDATE=false
@@ -20,13 +22,6 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -DBUILD_SHARED_LIBS=OFF
 -DGLFW_BUILD_WAYLAND=OFF
 "
-
-termux_step_pre_configure() {
-	# ASTC's NEON backend uses AArch64 intrinsics unavailable on 32-bit ARM.
-	if [ "$TERMUX_ARCH" = "arm" ]; then
-		TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -DASTC_ARCH=NONE"
-	fi
-}
 
 termux_step_get_source() {
 	mkdir -p "$TERMUX_PKG_SRCDIR"
